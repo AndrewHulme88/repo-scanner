@@ -140,6 +140,54 @@ credentials, secret values, or sensitive repository content in this document.
 - **Consequences:** Additional projects or abstractions will be added only when a
   concrete implementation phase requires them.
 
+### Phase 1 redaction boundary
+
+- **Status:** Accepted
+- **Context:** Rules must inspect raw content, but findings, diagnostics, output,
+  and future serialization must not retain detected secret values.
+- **Decision:** Raw content exists only in a short-lived `ScanCandidate` during
+  evaluation. A `Finding` requires `RedactedEvidence`, whose construction from a
+  secret retains only its character count and whose display is always
+  `[REDACTED]`.
+- **Alternatives:** Store raw evidence and redact only in output formatters, or
+  store a plain cryptographic hash of the secret.
+- **Reasoning:** Domain-level redaction prevents a new formatter or exception
+  path from accidentally exposing the value. A plain hash was rejected because
+  low-entropy credentials can be guessed offline from unsalted hashes.
+- **Consequences:** Rules must derive safe location and metadata before returning
+  findings. A keyed fingerprint may be considered later only if duplicate
+  correlation presents a concrete need.
+
+### Phase 1 candidate-source boundary
+
+- **Status:** Accepted
+- **Context:** The first vertical slice needs real file input, while safe
+  recursive traversal belongs to Phase 2.
+- **Decision:** Define an injectable candidate-source interface and ship a
+  temporary Phase 1 implementation that reads one selected file or only files
+  directly inside a selected directory.
+- **Alternatives:** Implement recursive traversal early or use in-memory test
+  candidates without a real filesystem path.
+- **Reasoning:** This exercises the actual CLI-to-rule pipeline while avoiding
+  premature, unsafe recursion and keeping traversal responsibilities replaceable.
+- **Consequences:** Phase 1 is deliberately unsuitable for a complete repository
+  scan. It currently materializes top-level file paths and contents; Phase 2 must
+  replace this with bounded streaming, limits, binary handling, and link safety.
+
+### Phase 1 CLI parsing
+
+- **Status:** Accepted
+- **Context:** Phase 1 requires only `scan`, one path, help, and a failure
+  threshold. The full terminal experience and dependency checkpoint are Phase 5.
+- **Decision:** Use a small internal parser with explicit accepted values and no
+  new production dependency.
+- **Alternatives:** Select a command-line parsing package during Phase 1.
+- **Reasoning:** The current grammar is small enough to validate clearly, while
+  choosing a public CLI framework before Phase 5 would pre-empt its planned
+  comparison and compatibility review.
+- **Consequences:** Replace or expand the parser deliberately during Phase 5;
+  preserve the documented command and exit-code contracts.
+
 ## Open questions
 
 - Which result formats are required initially: terminal, JSON, and/or SARIF?
@@ -174,6 +222,40 @@ and workload characteristics with results, and establish a measured baseline
 before defining regression thresholds.
 
 ## Issues and investigations
+
+### 2026-08-17 — Synthetic marker made documentation scan positive
+
+- **Status:** Resolved
+- **Observed:** The CLI smoke test reported the README because it documented the
+  complete synthetic marker as one contiguous literal.
+- **Impact:** Scanning the project's own top-level documentation returned the
+  findings exit code despite containing no fixture value intended for testing.
+- **Cause:** The marker rule correctly matched its own literal signature in
+  documentation and would eventually match the detector source as well.
+- **Resolution:** Compose the marker from separate constant parts and describe it
+  as separate fragments in prose. Tests create positive fixture content at
+  runtime through the composed constant.
+- **Verification:** Scan `README.md` and search the working tree to confirm the
+  complete marker appears only when a positive fixture is deliberately built at
+  runtime.
+- **Follow-up:** Production rules need representative self-scan tests and careful
+  fixture organization before their catalogue expands.
+
+### 2026-08-17 — Folder namespace rule broke solution formatting
+
+- **Status:** Resolved
+- **Observed:** `dotnet format` failed with `Changing document properties is not
+  supported` after Phase 1 placed Core types in organizational subdirectories
+  while retaining the concise `RepoScanner.Core` namespace.
+- **Impact:** Formatting could not complete, even though source formatting itself
+  was valid.
+- **Cause:** The configured namespace-must-match-folder code fix attempted a
+  document-level change that the formatter's MSBuild workspace could not apply.
+- **Resolution:** Removed the folder-to-namespace rule. Core subdirectories may
+  organize related files without forcing those folder names into the public API.
+- **Verification:** Re-run formatting, build, and tests for the complete solution.
+- **Follow-up:** Prefer namespaces based on coherent public API design; introduce
+  sub-namespaces when they improve usability rather than mirror storage alone.
 
 ### 2026-08-17 — Build-time IDE0005 enforcement required XML documentation
 

@@ -3,7 +3,8 @@
 ## Progress
 
 - **Phase 0 — Project foundation:** Complete.
-- **Phase 1 — Safe domain model and first vertical slice:** Not started.
+- **Phase 1 — Safe domain model and first vertical slice:** Complete.
+- **Phase 2 — Bounded filesystem traversal:** Not started.
 
 ## 1. Planning principles
 

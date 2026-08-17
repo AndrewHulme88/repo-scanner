@@ -93,6 +93,12 @@
           "xunit.extensibility.core": "[2.9.3]"
         }
       },
+      "reposcanner.cli": {
+        "type": "Project",
+        "dependencies": {
+          "RepoScanner.Core": "[1.0.0, )"
+        }
+      },
       "reposcanner.core": {
         "type": "Project"
       }

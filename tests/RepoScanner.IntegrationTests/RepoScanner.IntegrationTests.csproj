@@ -12,6 +12,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="../../src/RepoScanner.Cli/RepoScanner.Cli.csproj" />
     <ProjectReference Include="../../src/RepoScanner.Core/RepoScanner.Core.csproj" />
   </ItemGroup>
   <ItemGroup>

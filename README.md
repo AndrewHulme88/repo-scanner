@@ -42,8 +42,26 @@ dotnet build repo-scanner.slnx
 dotnet run --project src/RepoScanner.Cli
 ```
 
-The CLI currently displays a placeholder message; scanning commands will be
-documented here as they are implemented.
+The Phase 1 vertical slice supports this initial scan command:
+
+```sh
+dotnet run --project src/RepoScanner.Cli -- scan [path] --fail-on high
+```
+
+`path` may be a file or directory and defaults to the current directory. The
+failure threshold accepts `low`, `medium`, `high`, or `critical`, and defaults to
+`high`.
+
+Current exit codes are:
+
+| Code | Meaning |
+| ---: | --- |
+| `0` | The scan completed without findings at the configured threshold. |
+| `1` | The scan completed with findings at or above the threshold. |
+| `2` | The invocation was invalid, cancelled, or could not produce a trustworthy result. |
+
+Phase 1 intentionally scans only an explicitly selected file or files directly
+inside a selected directory. Recursive, bounded traversal is Phase 2 work.
 
 ## Test and format
 
@@ -92,5 +110,9 @@ or example. Revoke the credential first and provide a redacted reproduction.
 
 ## Status
 
-Phase 0 project scaffolding is complete. No scanner functionality has been
-implemented yet.
+Phase 1 is complete. The end-to-end pipeline currently contains one synthetic
+rule, `RS1000`, which recognizes fixtures composed of the
+`REPO_SCANNER_TEST_` prefix followed by `SECRET=` and a value. This allows
+redaction, severity, output, and exit behavior to be tested safely without this
+documentation becoming a finding. It is not a real credential detector.
+Recursive traversal and production detection rules are planned in later phases.
