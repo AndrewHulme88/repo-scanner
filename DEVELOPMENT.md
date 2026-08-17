@@ -46,16 +46,59 @@ credentials, secret values, or sensitive repository content in this document.
 - **Consequences:** Redaction must be a domain-level invariant rather than only
   a formatting concern, and tests must use synthetic credentials.
 
+### Initial scan scope
+
+- **Status:** Accepted
+- **Context:** Working-tree and Git-history scanning have different correctness,
+  performance, and reporting requirements.
+- **Decision:** The MVP scans tracked files and untracked, non-ignored files in
+  the working tree. It also supports ordinary directories. Git history and
+  untracked ignored files are excluded by default.
+- **Alternatives:** Scan only tracked files, include all ignored files, or scan
+  working trees and history from the first release.
+- **Reasoning:** This catches material about to be committed while keeping scope,
+  runtime, and false positives manageable. History scanning can be added later
+  as an explicit workflow.
+- **Consequences:** Tracked files remain candidates even when current ignore
+  rules match them. Skipped and failed file counts must remain visible.
+
+### CI failure contract
+
+- **Status:** Accepted
+- **Context:** Automation must distinguish detected policy violations from an
+  invalid or incomplete scan.
+- **Decision:** Use a configurable severity threshold, defaulting to `High`, and
+  stable exit codes: `0` for no threshold-level findings, `1` for findings, and
+  `2` for invalid invocation or operational failure.
+- **Alternatives:** Fail on every finding or use a single nonzero exit code.
+- **Reasoning:** A threshold supports different risk tolerances, while distinct
+  failure codes prevent a scanner error from being confused with a finding.
+- **Consequences:** Severity and scan completeness are part of the public
+  behavior and require contract tests.
+
+### Dependency policy
+
+- **Status:** Accepted
+- **Context:** Correct Git, command-line, report, and benchmark behavior may be
+  costly or risky to recreate, but every dependency increases maintenance and
+  supply-chain exposure.
+- **Decision:** Allow a production dependency when evaluation shows it is the
+  most reliable and maintainable solution to a material problem. Document the
+  decision before adoption.
+- **Alternatives:** Avoid all dependencies or add libraries whenever convenient.
+- **Reasoning:** Deliberate evaluation preserves access to mature implementations
+  without growing the dependency graph unnecessarily.
+- **Consequences:** Evaluate maintenance, license, transitive footprint,
+  untrusted-input risk, cross-platform behavior, and distribution impact at the
+  relevant implementation phase.
+
 ## Open questions
 
-- Should the first release scan only the working tree, or also committed Git
-  history?
 - Which result formats are required initially: terminal, JSON, and/or SARIF?
-- How should severity thresholds map to process exit codes?
-- Which ignore semantics should be supported first: `.gitignore` only, or also
-  scanner-specific exclusions?
 - What suppression and baseline format will balance usability with visibility
   of new findings?
+- Which test, CLI parsing, Git integration, and benchmark dependencies best meet
+  the documented dependency policy?
 
 ## Blockers
 

@@ -71,6 +71,11 @@ or example. Revoke the credential first and provide a redacted reproduction.
 - [`AGENTS.md`](AGENTS.md) defines engineering and collaboration expectations.
 - [`DEVELOPMENT.md`](DEVELOPMENT.md) records decisions, blockers, performance
   concerns, investigations, and lessons learned during development.
+- [`docs/MVP_SPECIFICATION.md`](docs/MVP_SPECIFICATION.md) defines the agreed
+  behavior, boundaries, safety requirements, and acceptance criteria for the
+  first release.
+- [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) divides the MVP
+  into testable implementation phases and dependency decision checkpoints.
 
 ## Status
 
