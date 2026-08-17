@@ -188,6 +188,75 @@ credentials, secret values, or sensitive repository content in this document.
 - **Consequences:** Replace or expand the parser deliberately during Phase 5;
   preserve the documented command and exit-code contracts.
 
+### Bounded filesystem traversal
+
+- **Status:** Accepted
+- **Context:** Recursive scans must handle large and adversarial directory trees
+  without building an unbounded list of paths, tasks, or file contents.
+- **Decision:** Use a streaming candidate-source contract backed by bounded
+  `System.Threading.Channels`. One producer enumerates one directory at a time;
+  a bounded worker set reads files; the scanner consumes results as they arrive.
+  Default concurrency is the logical processor count clamped to 1–8.
+- **Alternatives:** Materialize the entire tree, create one task per file, process
+  everything sequentially, or add a traversal dependency.
+- **Reasoning:** Channels provide backpressure with .NET platform APIs, bounded
+  workers improve I/O throughput, and streaming prevents repository size from
+  directly controlling queued work.
+- **Consequences:** Finding and diagnostic output is sorted after processing for
+  deterministic presentation. Benchmarks remain deferred until representative
+  detection rules exist.
+
+### File size and memory limits
+
+- **Status:** Accepted
+- **Context:** File metadata can become stale while a file is being read, and a
+  public scanner must not allow size and concurrency settings to multiply into
+  excessive memory use.
+- **Decision:** Default to a 1 MiB file limit, stop reads at limit plus one byte,
+  grow buffers only as needed, and reject configurations where maximum file size
+  multiplied by read concurrency exceeds 64 MiB.
+- **Alternatives:** Trust pre-read file length, read without a limit, or allocate
+  the maximum buffer for every selected file.
+- **Reasoning:** The extra byte detects files that grow after metadata inspection;
+  combined validation bounds concurrent raw buffers; incremental growth avoids a
+  full-size allocation for small files.
+- **Consequences:** Large files are skipped with `RS-D004` and remain part of a
+  complete scan because their omission is explicit. The limits should be
+  revisited using Phase 8 measurements.
+
+### Links and text encoding
+
+- **Status:** Accepted
+- **Context:** Links can escape the scan root or create cycles, while decoding
+  arbitrary bytes as text can corrupt matches or waste rule-processing time.
+- **Decision:** Reject a link/reparse point as the scan root and do not follow
+  linked files or directories encountered during traversal. Support strict UTF-8
+  and BOM-identified UTF-16/UTF-32; treat null-containing unmarked content as
+  binary and invalid text as unsupported.
+- **Alternatives:** Resolve and containment-check links, follow links with cycle
+  detection, or decode all input with replacement characters.
+- **Reasoning:** Not following links gives the clearest cross-platform containment
+  guarantee. Strict decoding avoids silently changing the content evaluated by
+  rules.
+- **Consequences:** Linked files, binaries, large files, and unsupported encodings
+  are skipped with visible diagnostics. More encoding support can be added when
+  representative repositories demonstrate a need.
+
+### Phase 2 dependency checkpoint
+
+- **Status:** Accepted
+- **Context:** The implementation plan required evaluating whether traversal
+  needed a production package.
+- **Decision:** Use only .NET base class library APIs for Phase 2.
+- **Alternatives:** Add a filesystem traversal, pipeline, or encoding package.
+- **Reasoning:** The BCL supplies filesystem metadata, async streams, channels,
+  cancellation, strict encodings, and cross-platform link attributes needed by
+  the documented behavior. A dependency would add supply-chain surface without
+  closing a demonstrated correctness gap.
+- **Consequences:** Platform differences remain covered by integration tests and
+  documented explicitly. Revisit only if a concrete unsupported behavior is
+  discovered.
+
 ## Open questions
 
 - Which result formats are required initially: terminal, JSON, and/or SARIF?
@@ -206,10 +275,11 @@ No blockers are currently known.
 
 ## Performance concerns
 
-- Repository traversal must use bounded concurrency rather than creating one
-  task per file.
+- Repository traversal now uses bounded channels and a fixed worker count rather
+  than creating one task per file; benchmark validation remains outstanding.
 - Large and binary files should be identified without loading their entire
-  contents into memory.
+  contents into memory. Phase 2 caps reads at the configured limit plus one byte,
+  but representative memory measurements remain outstanding.
 - Detection rules, especially regular expressions, need predictable runtime on
   adversarial input.
 - File-count, file-size, and cancellation limits should be observable so a

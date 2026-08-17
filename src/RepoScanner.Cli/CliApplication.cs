@@ -39,7 +39,7 @@ internal static class CliApplication
         try
         {
             ScanRequest request = new(options.Path, options.FailureThreshold);
-            RepositoryScanner scanner = RepositoryScanner.CreatePhaseOneScanner();
+            RepositoryScanner scanner = RepositoryScanner.CreateDefault();
             ScanResult result = await scanner.ScanAsync(request, cancellationToken);
 
             await WriteResultAsync(result, output);
@@ -88,7 +88,10 @@ internal static class CliApplication
         }
 
         await output.WriteLineAsync(
-            $"Scanned {result.ScannedFileCount} file(s); " +
+            $"Selected {result.SelectedFileCount} file(s); " +
+            $"scanned {result.ScannedFileCount}; " +
+            $"skipped {result.SkippedFileCount}; " +
+            $"failed {result.FailedFileCount}; " +
             $"found {result.Findings.Count} issue(s); " +
             $"complete: {result.IsComplete.ToString().ToLowerInvariant()}; " +
             $"elapsed: {result.Elapsed.TotalMilliseconds:F0} ms.");
@@ -110,8 +113,7 @@ internal static class CliApplication
               --fail-on <severity>  low, medium, high, or critical. Defaults to high.
               -h, --help            Show help.
 
-            Phase 1 limitation: directory scans inspect files directly inside the selected
-            directory only. Safe recursive traversal is implemented in Phase 2.
+            Directory scans recurse safely without following symbolic links or reparse points.
 
             """);
     }

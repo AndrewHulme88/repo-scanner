@@ -124,8 +124,16 @@ not be a prerequisite for content scanning.
 - Define behavior consistently across Windows, macOS, and Linux, accounting for
   platform path and case-sensitivity differences.
 
-The exact default size and concurrency limits will be chosen using functional
-tests and early measurements, then documented before release.
+The default maximum file size is 1 MiB. The default read concurrency is the
+logical processor count clamped to the range 1–8. The product of maximum file
+size and read concurrency may not exceed 64 MiB, preventing configurations that
+would create unbounded concurrent content buffers. Individual limits may be
+made configurable through the CLI after the underlying behavior is stable.
+
+UTF-8 is supported with or without a byte-order mark. UTF-16 and UTF-32 are
+supported when a byte-order mark identifies byte order. Files containing null
+bytes without a recognized text BOM are treated as binary; invalid UTF text is
+reported as an unsupported encoding. These skips are accounted for explicitly.
 
 ## 8. Detection scope
 

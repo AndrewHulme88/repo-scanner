@@ -22,4 +22,14 @@ public sealed class DomainValidationTests
                 RedactedEvidence.FromSecret("synthetic"),
                 "Remove the synthetic value."));
     }
+
+    [Fact]
+    public void ScanRequestRejectsUnboundedCombinedFileSizeAndConcurrency()
+    {
+        Assert.Throws<ArgumentException>(
+            () => new ScanRequest(
+                ".",
+                maximumFileSizeBytes: ScanRequest.MaximumAllowedFileSizeBytes,
+                maximumConcurrency: 2));
+    }
 }

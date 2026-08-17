@@ -60,8 +60,11 @@ Current exit codes are:
 | `1` | The scan completed with findings at or above the threshold. |
 | `2` | The invocation was invalid, cancelled, or could not produce a trustworthy result. |
 
-Phase 1 intentionally scans only an explicitly selected file or files directly
-inside a selected directory. Recursive, bounded traversal is Phase 2 work.
+Directory scans recurse through ordinary directories. Traversal does not follow
+symbolic links or reparse points, uses bounded concurrent file reads, and reports
+files that were scanned, skipped, or failed. Files larger than 1 MiB, binary
+files, and invalid or unsupported text encodings are skipped with diagnostics.
+UTF-8 is supported with or without a BOM; UTF-16 and UTF-32 require a BOM.
 
 ## Test and format
 
@@ -110,9 +113,11 @@ or example. Revoke the credential first and provide a redacted reproduction.
 
 ## Status
 
-Phase 1 is complete. The end-to-end pipeline currently contains one synthetic
-rule, `RS1000`, which recognizes fixtures composed of the
+Phase 2 is complete. The scanner now has recursive, cancellable, bounded
+filesystem traversal with explicit accounting and diagnostics. The detection
+pipeline still contains one synthetic rule, `RS1000`, which recognizes fixtures composed of the
 `REPO_SCANNER_TEST_` prefix followed by `SECRET=` and a value. This allows
 redaction, severity, output, and exit behavior to be tested safely without this
 documentation becoming a finding. It is not a real credential detector.
-Recursive traversal and production detection rules are planned in later phases.
+Git-aware candidate selection and production detection rules are planned in
+later phases.

@@ -6,14 +6,34 @@ public sealed class ScanResult
         IEnumerable<Finding> findings,
         IEnumerable<ScanDiagnostic> diagnostics,
         FindingSeverity failureThreshold,
+        int selectedFileCount,
         int scannedFileCount,
+        int skippedFileCount,
+        int failedFileCount,
         bool isComplete,
         TimeSpan elapsed)
     {
         ArgumentNullException.ThrowIfNull(findings);
         ArgumentNullException.ThrowIfNull(diagnostics);
+        ArgumentOutOfRangeException.ThrowIfNegative(selectedFileCount);
         ArgumentOutOfRangeException.ThrowIfNegative(scannedFileCount);
+        ArgumentOutOfRangeException.ThrowIfNegative(skippedFileCount);
+        ArgumentOutOfRangeException.ThrowIfNegative(failedFileCount);
         ArgumentOutOfRangeException.ThrowIfLessThan(elapsed, TimeSpan.Zero);
+
+        if (selectedFileCount != scannedFileCount + skippedFileCount + failedFileCount)
+        {
+            throw new ArgumentException(
+                "Selected file count must equal scanned, skipped, and failed file counts.",
+                nameof(selectedFileCount));
+        }
+
+        if (isComplete && failedFileCount > 0)
+        {
+            throw new ArgumentException(
+                "A scan with failed files cannot be complete.",
+                nameof(isComplete));
+        }
 
         if (!Enum.IsDefined(failureThreshold))
         {
@@ -26,7 +46,10 @@ public sealed class ScanResult
         Findings = Array.AsReadOnly(findings.ToArray());
         Diagnostics = Array.AsReadOnly(diagnostics.ToArray());
         FailureThreshold = failureThreshold;
+        SelectedFileCount = selectedFileCount;
         ScannedFileCount = scannedFileCount;
+        SkippedFileCount = skippedFileCount;
+        FailedFileCount = failedFileCount;
         IsComplete = isComplete;
         Elapsed = elapsed;
     }
@@ -37,7 +60,13 @@ public sealed class ScanResult
 
     public FindingSeverity FailureThreshold { get; }
 
+    public int SelectedFileCount { get; }
+
     public int ScannedFileCount { get; }
+
+    public int SkippedFileCount { get; }
+
+    public int FailedFileCount { get; }
 
     public bool IsComplete { get; }
 

@@ -4,7 +4,8 @@
 
 - **Phase 0 — Project foundation:** Complete.
 - **Phase 1 — Safe domain model and first vertical slice:** Complete.
-- **Phase 2 — Bounded filesystem traversal:** Not started.
+- **Phase 2 — Bounded filesystem traversal:** Complete.
+- **Phase 3 — Git-aware candidate selection:** Not started.
 
 ## 1. Planning principles
 

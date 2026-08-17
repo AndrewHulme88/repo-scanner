@@ -23,10 +23,10 @@ public sealed class RepositoryScanner
         }
     }
 
-    public static RepositoryScanner CreatePhaseOneScanner()
+    public static RepositoryScanner CreateDefault()
     {
         return new RepositoryScanner(
-            new PhaseOneCandidateSource(),
+            new FileSystemCandidateSource(),
             [new SyntheticSecretRule()]);
     }
 
@@ -37,17 +37,51 @@ public sealed class RepositoryScanner
         ArgumentNullException.ThrowIfNull(request);
 
         Stopwatch stopwatch = Stopwatch.StartNew();
-        CandidateSourceResult sourceResult = await _candidateSource.ReadAsync(
-            request,
-            cancellationToken);
-
         List<Finding> findings = [];
-        List<ScanDiagnostic> diagnostics = [.. sourceResult.Diagnostics];
-        bool isComplete = sourceResult.IsComplete;
+        List<ScanDiagnostic> diagnostics = [];
+        int selectedFileCount = 0;
+        int scannedFileCount = 0;
+        int skippedFileCount = 0;
+        int failedFileCount = 0;
+        bool sourceComplete = true;
 
-        foreach (ScanCandidate candidate in sourceResult.Candidates)
+        await foreach (CandidateSourceItem item in _candidateSource.ReadAsync(
+            request,
+            cancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
+
+            if (item.Diagnostic is not null)
+            {
+                diagnostics.Add(item.Diagnostic);
+            }
+
+            if (item.AffectsCompleteness)
+            {
+                sourceComplete = false;
+            }
+
+            if (item.Disposition == CandidateDisposition.None)
+            {
+                continue;
+            }
+
+            selectedFileCount++;
+
+            if (item.Disposition == CandidateDisposition.Skipped)
+            {
+                skippedFileCount++;
+                continue;
+            }
+
+            if (item.Disposition == CandidateDisposition.Failed)
+            {
+                failedFileCount++;
+                continue;
+            }
+
+            ScanCandidate candidate = item.Candidate!;
+            bool ruleFailed = false;
 
             foreach (IScanRule rule in _rules)
             {
@@ -63,8 +97,17 @@ public sealed class RepositoryScanner
                         "RS-D002",
                         $"Rule {rule.Id} could not evaluate a selected file.",
                         candidate.RelativePath));
-                    isComplete = false;
+                    ruleFailed = true;
                 }
+            }
+
+            if (ruleFailed)
+            {
+                failedFileCount++;
+            }
+            else
+            {
+                scannedFileCount++;
             }
         }
 
@@ -76,10 +119,15 @@ public sealed class RepositoryScanner
                 .ThenBy(finding => finding.Location.Line)
                 .ThenBy(finding => finding.Location.Column)
                 .ThenBy(finding => finding.RuleId, StringComparer.Ordinal),
-            diagnostics,
+            diagnostics
+                .OrderBy(diagnostic => diagnostic.RelativePath, StringComparer.Ordinal)
+                .ThenBy(diagnostic => diagnostic.Code, StringComparer.Ordinal),
             request.FailureThreshold,
-            sourceResult.Candidates.Count,
-            isComplete,
+            selectedFileCount,
+            scannedFileCount,
+            skippedFileCount,
+            failedFileCount,
+            sourceComplete && failedFileCount == 0,
             stopwatch.Elapsed);
     }
 }

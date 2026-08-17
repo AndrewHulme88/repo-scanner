@@ -16,7 +16,10 @@ public sealed class ScanResultTests
             [finding],
             [],
             threshold,
+            selectedFileCount: 1,
             scannedFileCount: 1,
+            skippedFileCount: 0,
+            failedFileCount: 0,
             isComplete: true,
             TimeSpan.Zero);
 
@@ -33,5 +36,21 @@ public sealed class ScanResultTests
             new FindingLocation("sample.txt", 1, 1),
             RedactedEvidence.FromSecret("synthetic"),
             "Remove the synthetic value.");
+    }
+
+    [Fact]
+    public void ConstructorRejectsInconsistentFileAccounting()
+    {
+        Assert.Throws<ArgumentException>(
+            () => new ScanResult(
+                [],
+                [],
+                FindingSeverity.High,
+                selectedFileCount: 2,
+                scannedFileCount: 1,
+                skippedFileCount: 0,
+                failedFileCount: 0,
+                isComplete: true,
+                TimeSpan.Zero));
     }
 }
