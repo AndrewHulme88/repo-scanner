@@ -1,5 +1,10 @@
 # MVP implementation plan
 
+## Progress
+
+- **Phase 0 — Project foundation:** Complete.
+- **Phase 1 — Safe domain model and first vertical slice:** Not started.
+
 ## 1. Planning principles
 
 - Build the smallest end-to-end vertical slice before expanding the rule set.

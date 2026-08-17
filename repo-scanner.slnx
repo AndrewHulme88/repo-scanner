@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="src/RepoScanner.Cli/RepoScanner.Cli.csproj" />
+  <Project Path="src/RepoScanner.Core/RepoScanner.Core.csproj" />
+  <Project Path="tests/RepoScanner.Core.Tests/RepoScanner.Core.Tests.csproj" />
+  <Project Path="tests/RepoScanner.IntegrationTests/RepoScanner.IntegrationTests.csproj" />
+</Solution>

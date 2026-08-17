@@ -38,22 +38,35 @@ are stable.
 From the repository root:
 
 ```sh
-dotnet build
-dotnet run --project repo-scanner.csproj
+dotnet build repo-scanner.slnx
+dotnet run --project src/RepoScanner.Cli
 ```
 
-The current program is still the default console application; scanning commands
-will be documented here as they are implemented.
+The CLI currently displays a placeholder message; scanning commands will be
+documented here as they are implemented.
 
 ## Test and format
 
 ```sh
-dotnet format --verify-no-changes
-dotnet test
+dotnet format repo-scanner.slnx --verify-no-changes
+dotnet test repo-scanner.slnx
 ```
 
-There is not yet a test project. The test command is included as the expected
-workflow once tests are introduced.
+Unit and integration test projects use xUnit. Package versions are managed
+centrally in `Directory.Packages.props`, and shared build settings are defined in
+`Directory.Build.props`.
+
+## Project structure
+
+```text
+src/
+  RepoScanner.Core/              Reusable scanning and detection logic
+  RepoScanner.Cli/               Command-line entry point and presentation
+tests/
+  RepoScanner.Core.Tests/        Fast unit tests
+  RepoScanner.IntegrationTests/  Filesystem, Git, and end-to-end tests
+docs/                            Specification and implementation plan
+```
 
 ## Security principles
 
@@ -79,4 +92,5 @@ or example. Revoke the credential first and provide a redacted reproduction.
 
 ## Status
 
-Early development. No scanner functionality has been implemented yet.
+Phase 0 project scaffolding is complete. No scanner functionality has been
+implemented yet.

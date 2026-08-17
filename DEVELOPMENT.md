@@ -92,6 +92,54 @@ credentials, secret values, or sensitive repository content in this document.
   untrusted-input risk, cross-platform behavior, and distribution impact at the
   relevant implementation phase.
 
+### Test framework
+
+- **Status:** Accepted
+- **Context:** Phase 0 requires cross-platform unit and integration test projects
+  that work with standard .NET tooling and CI providers.
+- **Decision:** Use xUnit with `Microsoft.NET.Test.Sdk` and the Visual Studio test
+  adapter. Manage versions centrally in `Directory.Packages.props`. Do not add a
+  coverage collector until coverage reporting is configured.
+- **Alternatives:** MSTest, NUnit, or a custom test harness.
+- **Reasoning:** xUnit is mature, cross-platform, widely understood in the .NET
+  ecosystem, and supports concise isolated tests. The standard test SDK and
+  adapter integrate with `dotnet test` and common development tools. Deferring
+  coverage avoids carrying an unused dependency.
+- **Consequences:** Test projects depend on xUnit, the test SDK, and the adapter.
+  Framework-specific features should remain in test code and must not shape
+  production APIs.
+
+### Solution and shared build configuration
+
+- **Status:** Accepted
+- **Context:** The project needs a modern multi-project structure with consistent
+  compiler, analyzer, formatting, and dependency settings.
+- **Decision:** Use the .NET 10 `.slnx` solution format, central package version
+  management, package lock files, repository-wide `Directory.Build.props`, and a
+  root `.editorconfig`. Treat build and analyzer warnings as errors.
+- **Alternatives:** Use the legacy `.sln` format and duplicate settings and
+  package versions in individual project files.
+- **Reasoning:** `.slnx` is concise and supported by the project's required .NET
+  10 SDK. Central settings reduce drift, lock files make restores reproducible,
+  and warnings-as-errors prevents new quality issues from accumulating.
+- **Consequences:** Contributors need tooling that supports `.slnx` and the .NET
+  10 SDK. Dependency updates intentionally change committed lock files.
+
+### Initial project boundaries
+
+- **Status:** Accepted
+- **Context:** The scanner begins as a CLI but its core must support future front
+  ends.
+- **Decision:** Create separate Core and CLI projects, with the CLI referencing
+  Core and no reverse reference. Keep unit and integration tests separate; both
+  currently reference only Core.
+- **Alternatives:** Continue with one executable project or introduce additional
+  application/infrastructure layers immediately.
+- **Reasoning:** This enforces the required presentation boundary without adding
+  layers that have no current responsibility.
+- **Consequences:** Additional projects or abstractions will be added only when a
+  concrete implementation phase requires them.
+
 ## Open questions
 
 - Which result formats are required initially: terminal, JSON, and/or SARIF?
@@ -99,6 +147,10 @@ credentials, secret values, or sensitive repository content in this document.
   of new findings?
 - Which test, CLI parsing, Git integration, and benchmark dependencies best meet
   the documented dependency policy?
+
+The test-framework portion of the final question is resolved. CLI parsing, Git
+integration, and benchmark dependencies remain open until their implementation
+checkpoints.
 
 ## Blockers
 
@@ -123,7 +175,24 @@ before defining regression thresholds.
 
 ## Issues and investigations
 
-No issues have been recorded yet.
+### 2026-08-17 — Build-time IDE0005 enforcement required XML documentation
+
+- **Status:** Resolved
+- **Observed:** The first Phase 0 build failed with Roslyn's
+  `EnableGenerateDocumentationFile` diagnostic after `IDE0005` was explicitly
+  elevated to a warning in `.editorconfig`.
+- **Impact:** All projects containing C# source failed under
+  warnings-as-errors, despite having no unnecessary using directives.
+- **Cause:** Roslyn requires `GenerateDocumentationFile=true` to enforce
+  `IDE0005` during compilation. Enabling documentation generation now would also
+  require suppressing or resolving documentation diagnostics before public APIs
+  exist.
+- **Resolution:** Removed the explicit build-time severity for `IDE0005`.
+  Unnecessary using directives remain checked by
+  `dotnet format --verify-no-changes`.
+- **Verification:** Re-run formatting, build, and tests for the complete solution.
+- **Follow-up:** Reconsider XML documentation generation when the Core public API
+  is introduced and its documentation policy can be defined deliberately.
 
 When adding an entry, use this structure:
 
