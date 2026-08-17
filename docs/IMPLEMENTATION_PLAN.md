@@ -5,7 +5,8 @@
 - **Phase 0 — Project foundation:** Complete.
 - **Phase 1 — Safe domain model and first vertical slice:** Complete.
 - **Phase 2 — Bounded filesystem traversal:** Complete.
-- **Phase 3 — Git-aware candidate selection:** Not started.
+- **Phase 3 — Git-aware candidate selection:** Complete.
+- **Phase 4 — Initial detection catalogue:** Not started.
 
 ## 1. Planning principles
 
@@ -55,7 +56,7 @@ Responsibilities:
 This is a target shape, not permission to add abstractions without a current
 responsibility.
 
-## 3. Phase 0 — Project foundation
+## 3. Phase 0 — Project foundation - Complete
 
 ### Outcomes
 
@@ -80,7 +81,7 @@ responsibility.
 - Solution format supported by the intended developer tooling.
 - Initial CI provider once the repository is hosted.
 
-## 4. Phase 1 — Safe domain model and first vertical slice
+## 4. Phase 1 — Safe domain model and first vertical slice - Complete
 
 ### Outcomes
 
@@ -104,7 +105,7 @@ responsibility.
 The tool can safely scan a controlled directory through the complete pipeline,
 even though traversal and the rule catalogue are still minimal.
 
-## 5. Phase 2 — Bounded filesystem traversal
+## 5. Phase 2 — Bounded filesystem traversal - Complete
 
 ### Outcomes
 
@@ -129,7 +130,7 @@ even though traversal and the rule catalogue are still minimal.
 Evaluate whether filesystem behavior can be implemented reliably with the .NET
 base class library. Add no traversal dependency without a demonstrated gap.
 
-## 6. Phase 3 — Git-aware candidate selection
+## 6. Phase 3 — Git-aware candidate selection - Complete
 
 ### Outcomes
 

@@ -32,6 +32,8 @@ are stable.
 ## Requirements
 
 - [.NET SDK 10](https://dotnet.microsoft.com/)
+- Git is optional for ordinary-directory scans and required for Git-aware
+  tracked, untracked, and ignore-rule selection.
 
 ## Build and run
 
@@ -65,6 +67,17 @@ symbolic links or reparse points, uses bounded concurrent file reads, and report
 files that were scanned, skipped, or failed. Files larger than 1 MiB, binary
 files, and invalid or unsupported text encodings are skipped with diagnostics.
 UTF-8 is supported with or without a BOM; UTF-16 and UTF-32 require a BOM.
+
+Inside a Git working tree, the scanner asks Git itself to select tracked files
+plus untracked, non-ignored files. Tracked files remain selected even if a later
+ignore rule matches them. Ignored untracked files, `.git` object storage, commit
+history, and submodule contents are not scanned. Selecting an individual file
+explicitly scans that file even when it is ignored.
+
+If Git is not installed, the scanner falls back to ordinary-directory traversal
+and reports that fallback. If Git detects a working tree but candidate selection
+fails, the scan is incomplete and returns exit code `2` rather than silently
+scanning a different scope.
 
 ## Test and format
 
@@ -113,11 +126,10 @@ or example. Revoke the credential first and provide a redacted reproduction.
 
 ## Status
 
-Phase 2 is complete. The scanner now has recursive, cancellable, bounded
-filesystem traversal with explicit accounting and diagnostics. The detection
-pipeline still contains one synthetic rule, `RS1000`, which recognizes fixtures composed of the
+Phase 3 is complete. The scanner now has Git-aware candidate selection on top of
+recursive, cancellable, bounded filesystem traversal. The detection pipeline
+still contains one synthetic rule, `RS1000`, which recognizes fixtures composed of the
 `REPO_SCANNER_TEST_` prefix followed by `SECRET=` and a value. This allows
 redaction, severity, output, and exit behavior to be tested safely without this
 documentation becoming a finding. It is not a real credential detector.
-Git-aware candidate selection and production detection rules are planned in
-later phases.
+Production detection rules are planned for Phase 4.

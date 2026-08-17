@@ -104,11 +104,26 @@ When the scan root is inside a Git working tree:
 - Do not inspect `.git` object storage or Git history.
 - Report counts of scanned, ignored, unsupported, and failed files.
 
+Git-aware selection uses the installed Git executable and Git's own
+`ls-files` semantics rather than reproducing ignore behavior. The executable is
+resolved only from absolute `PATH` entries before repository commands run; the
+current directory is not used for executable discovery. Repository commands are
+non-interactive, clear inherited repository/index/object location overrides, and
+do not take repository content as shell syntax.
+
+If Git is unavailable, scanning falls back to ordinary-directory behavior and
+reports the fallback. If a working tree is detected but Git selection fails, the
+result is incomplete. Git submodule directory contents are not traversed in the
+MVP. An explicitly selected file is scanned even if it is ignored.
+
 ### 7.2 Ordinary directories
 
 When no Git working tree is available, scan eligible files beneath the selected
 root using the scanner's default exclusions. Git must improve selection but must
 not be a prerequisite for content scanning.
+
+Ordinary-directory traversal excludes directories named `.git` so Git object
+storage is never treated as source content during fallback scanning.
 
 ### 7.3 Safety requirements
 

@@ -130,6 +130,18 @@ public sealed class FileSystemCandidateSource : IScanCandidateSource
     {
         try
         {
+            bool gitSelectionHandled = await GitPathCandidateProducer.TryProduceAsync(
+                rootPath,
+                pathWriter,
+                resultWriter,
+                cancellationToken);
+
+            if (gitSelectionHandled)
+            {
+                pathWriter.TryComplete();
+                return;
+            }
+
             Stack<string> pendingDirectories = new();
             pendingDirectories.Push(rootPath);
 
@@ -212,6 +224,22 @@ public sealed class FileSystemCandidateSource : IScanCandidateSource
 
                         bool isDirectory = attributes.HasFlag(FileAttributes.Directory);
                         bool isReparsePoint = attributes.HasFlag(FileAttributes.ReparsePoint);
+
+                        if (string.Equals(
+                                Path.GetFileName(entryPath),
+                                ".git",
+                                StringComparison.OrdinalIgnoreCase))
+                        {
+                            string relativePath = Path.GetRelativePath(rootPath, entryPath);
+                            await resultWriter.WriteAsync(
+                                CandidateSourceItem.Information(
+                                    new ScanDiagnostic(
+                                        "RS-D011",
+                                        "A Git metadata entry was excluded.",
+                                        relativePath)),
+                                cancellationToken);
+                            continue;
+                        }
 
                         if (isReparsePoint)
                         {

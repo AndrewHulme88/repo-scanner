@@ -257,6 +257,63 @@ credentials, secret values, or sensitive repository content in this document.
   documented explicitly. Revisit only if a concrete unsupported behavior is
   discovered.
 
+### Git-aware candidate selection
+
+- **Status:** Accepted
+- **Context:** Correct Git ignore behavior includes nested rules, negation,
+  repository excludes, global excludes, tracked files that later match ignore
+  rules, unusual filenames, and worktree-specific state.
+- **Decision:** Invoke Git non-interactively and stream the NUL-delimited output
+  of `git ls-files --cached --others --exclude-standard` into the bounded file
+  reader pipeline. Restrict selection with a pathspec when scanning a repository
+  subdirectory. Explicit file scans continue to bypass ignore selection.
+- **Alternatives:** Reimplement Git ignore/index behavior, use LibGit2Sharp, or
+  call `git status` and parse its porcelain output.
+- **Reasoning:** Git itself is the correctness reference and already exists in
+  the workflows that need Git-aware behavior. `ls-files -z` preserves spaces,
+  Unicode, and control characters without shell parsing and directly expresses
+  the required tracked-plus-untracked selection.
+- **Consequences:** Git is an optional external runtime prerequisite for
+  Git-aware selection but no NuGet production dependency was added. Submodule
+  directories are reported and not traversed. History remains out of scope.
+
+### Git command trust and failure policy
+
+- **Status:** Accepted
+- **Context:** The scanner runs against untrusted repositories. Executable search
+  through the current directory could select repository-controlled code, while a
+  silent fallback after a Git error could widen the scan scope unexpectedly.
+- **Decision:** Resolve Git only from absolute `PATH` directories before running
+  repository commands, use `ProcessStartInfo.ArgumentList` without a shell,
+  clear inherited repository/index/object override variables, disable prompts
+  and optional locks, and terminate child processes on cancellation. Fall back
+  only when Git is unavailable or the path is not a Git working tree. A Git
+  failure in a detected worktree makes the scan incomplete.
+- **Alternatives:** Invoke `git` through a shell, accept default executable search,
+  silently traverse the filesystem after every Git failure, or make Git mandatory
+  for all scans.
+- **Reasoning:** Explicit executable resolution and argument passing reduce
+  command-hijacking and injection risk. The failure distinction preserves the
+  user's intended candidate scope without preventing ordinary-directory use.
+- **Consequences:** Relative and empty entries in `PATH` are intentionally ignored.
+  Git output must be valid UTF-8 and NUL-delimited; unsupported path data produces
+  an incomplete result rather than a guessed filename.
+
+### Phase 3 dependency checkpoint
+
+- **Status:** Accepted
+- **Context:** The plan required comparing Git invocation, a maintained Git
+  library, and a partial in-process implementation.
+- **Decision:** Use the Git CLI and add no Git library dependency.
+- **Alternatives:** LibGit2Sharp/native libgit2 or custom index and ignore parsers.
+- **Reasoning:** A custom implementation has the highest semantic risk.
+  LibGit2Sharp adds native distribution, transitive dependency, and behavior
+  compatibility concerns while still requiring careful worktree handling. The
+  CLI supplies authoritative semantics with a small, auditable process boundary.
+- **Consequences:** Public installation guidance must identify Git as optional for
+  ordinary directories and required for Git-aware selection. Revisit only if
+  distribution feedback shows the external executable is a material obstacle.
+
 ## Open questions
 
 - Which result formats are required initially: terminal, JSON, and/or SARIF?
@@ -265,9 +322,9 @@ credentials, secret values, or sensitive repository content in this document.
 - Which test, CLI parsing, Git integration, and benchmark dependencies best meet
   the documented dependency policy?
 
-The test-framework portion of the final question is resolved. CLI parsing, Git
-integration, and benchmark dependencies remain open until their implementation
-checkpoints.
+The test-framework and Git-integration portions of the final question are
+resolved. CLI parsing and benchmark dependencies remain open until their
+implementation checkpoints.
 
 ## Blockers
 
