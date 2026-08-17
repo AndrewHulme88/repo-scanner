@@ -1,0 +1,66 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+[Aa]rtifacts/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio and VS Code
+.vs/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# JetBrains IDEs
+.idea/
+*.sln.iml
+
+# Test and coverage output
+[Tt]est[Rr]esult*/
+[Cc]overage[Rr]esult*/
+coverage/
+*.coverage
+*.coveragexml
+*.trx
+
+# NuGet packages and generated files
+*.nupkg
+*.snupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Publish output
+publish/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.secrets.json
+appsettings.Local.json
+appsettings.*.Local.json
+
+# Scanner output and local baselines
+repo-scanner-results.*
+*.sarif
+*.sarif.json
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
